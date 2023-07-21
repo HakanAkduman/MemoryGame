@@ -50,17 +50,20 @@ fun LevelScreenGenerate(navController: NavController){
 
         }
         Button(onClick = {
-
+            val level=0
+            navController.navigate("GameScreen/$level")
         }) {
             Text(_4)
         }
         Button(onClick = {
-
+            val level=1
+            navController.navigate("GameScreen/$level")
         }) {
             Text(_6)
         }
         Button(onClick = {
-
+            val level=2
+            navController.navigate("GameScreen/$level")
         }) {
             Text(_8)
         }

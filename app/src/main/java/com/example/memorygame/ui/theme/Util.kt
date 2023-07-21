@@ -6,8 +6,8 @@ import androidx.compose.ui.res.painterResource
 import com.example.memorygame.Model.Card
 import com.example.memorygame.R
 
-fun getPhotos(context: Context,edgeNumber:Int):List<Card>{
-    var list= mutableListOf<Card>()
+fun getPhotos(context: Context,edgeNumber:Int):List<List<Card>>{
+
     val packID= R.array.card_resources
     val packList=context.applicationContext.resources.getIntArray(packID)
     val cardNumber=edgeNumber*edgeNumber
@@ -19,6 +19,12 @@ fun getPhotos(context: Context,edgeNumber:Int):List<Card>{
     }
     arrayList.shuffle()
     arrayList.shuffle()
-    return arrayList
+    var list= ArrayList<ArrayList<Card>>(edgeNumber)
+    var index=0
+    while (index<cardNumber-1){
+        list.add(arrayList.subList(index,index+edgeNumber-1) as ArrayList<Card>)
+        index+=edgeNumber
+    }
+    return list
 
 }
