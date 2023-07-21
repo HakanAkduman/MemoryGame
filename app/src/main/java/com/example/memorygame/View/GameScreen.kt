@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -29,11 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.memorygame.Model.Card
+import com.example.memorygame.R
 import com.example.memorygame.ui.theme.BackGround
 import com.example.memorygame.ui.theme.getPhotos
 import kotlinx.coroutines.delay
@@ -71,6 +76,25 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
+        LazyColumn(){
+            items(cardList){
+                LazyRow(){
+
+                    items(it){
+                        GameCard(modifier = Modifier
+                            .size((384 / edgeNumber).dp)
+                            .padding(3.dp)
+                            , card =  it) {
+
+
+
+                        }
+                    }
+                }
+
+
+            }
+        }
 
 
 
@@ -103,9 +127,17 @@ fun startTimer(onTicked:(f:Float) -> Unit,onFinished: () -> Unit) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameCard(id:Int,onClick:()->Unit){
-    Card(onClick =onClick ) {
-        Image(painter = painterResource(id = id), contentDescription ="Game card" )
+fun GameCard(modifier: Modifier, card: Card, onClick:()->Unit){
+    Card(modifier = modifier,onClick =onClick,
+        colors = CardDefaults.cardColors(contentColor = Color(R.color.card_bg),
+            containerColor = Color(R.color.card_bg),
+            disabledContainerColor =Color(R.color.card_bg),
+            disabledContentColor = Color(R.color.card_bg)) ) {
+
+        Image(modifier=Modifier.fillMaxSize(),
+            painter = painterResource(id = card.photoUrl),
+            contentDescription ="Game card",
+            contentScale = ContentScale.FillBounds)
 
     }
 }
