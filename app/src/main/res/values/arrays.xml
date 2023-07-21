@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="card_resources">
+        <item>@drawable/img</item>
+        <item>@drawable/img_1</item>
+        <item>@drawable/img_2</item>
+        <item>@drawable/img_3</item>
+        <item>@drawable/img_4</item>
+        <item>@drawable/img_5</item>
+        <item>@drawable/img_6</item>
+        <item>@drawable/img_7</item>
+        <item>@drawable/img_8</item>
+        <item>@drawable/img_9</item>
+        <item>@drawable/img_10</item>
+        <item>@drawable/img_11</item>
+        <item>@drawable/img_12</item>
+        <item>@drawable/img_13</item>
+        <item>@drawable/img_14</item>
+        <item>@drawable/img_15</item>
+        <item>@drawable/img_16</item>
+        <item>@drawable/img_17</item>
+        <item>@drawable/img_18</item>
+        <item>@drawable/img_19</item>
+        <item>@drawable/img_20</item>
+        <item>@drawable/img_21</item>
+        <item>@drawable/img_22</item>
+        <item>@drawable/img_23</item>
+        <item>@drawable/img_24</item>
+        <item>@drawable/img_25</item>
+        <item>@drawable/img_26</item>
+        <item>@drawable/img_27</item>
+        <item>@drawable/img_28</item>
+        <item>@drawable/img_29</item>
+
+
+
+    </array>
+</resources>
