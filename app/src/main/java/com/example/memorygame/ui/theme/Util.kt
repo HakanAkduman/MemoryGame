@@ -15,8 +15,8 @@ fun getPhotos(context: Context,edgeNumber:Int):List<List<Card>>{
     var arrayList=ArrayList<Card>(cardNumber)
     while (i>0){
         val current=packList.random()
-        arrayList.add(Card(current))
-        arrayList.add(Card(current))
+        arrayList.add(Card(current, id = i))
+        arrayList.add(Card(current, id = i-1))
         i-=2
     }
     arrayList.shuffle()

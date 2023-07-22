@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,22 +42,37 @@ import com.example.memorygame.Model.Card
 import com.example.memorygame.R
 import com.example.memorygame.ui.theme.BackGround
 import com.example.memorygame.ui.theme.getPhotos
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameScreen(level:Int,navController: NavController){
     GameScreenGenerate(navController = navController, edgeNumber = 4+2*level)
 }
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
-    val cardList= getPhotos(LocalContext.current,edgeNumber)
+    val context= LocalContext.current
+
+    var seenList by remember{
+        mutableStateOf(mutableListOf<Card>())
+    }
+    val cardList by remember {
+        mutableStateOf(getPhotos(context,edgeNumber))
+    }
     var gameStarted by remember {
         mutableStateOf(false)
     }
 
 
+
     var progress by remember { mutableStateOf(1f) }
     var timerRunning by remember { mutableStateOf(false) }
+
+
+
     if (gameStarted&&!timerRunning){
         timerRunning = true
         progress = 1f
@@ -67,6 +83,8 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
             Log.e("Message","Timer bitti")
         }
     }
+
+
 
     Column(
         modifier = Modifier
@@ -80,11 +98,34 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
             items(cardList){
                 LazyRow(){
 
-                    items(it){
+                    items(it){card->
+
+
                         GameCard(modifier = Modifier
                             .size((384 / edgeNumber).dp)
                             .padding(3.dp)
-                            , card =  it) {
+                            , card =  card)
+                        {seen ->
+
+                            seenList.add(card)
+                            if (seenList.size == 2) {
+                                if (seenList[0].photoUrl == seenList[1].photoUrl) {
+                                    // Eşleşme durumu
+                                    Log.e("game","kartlar eşleşiyor")
+                                    seenList.forEach { it.knew=true }
+                                    seenList.clear()
+                                } else {
+                                    Log.e("game","kartlar farklı")
+                                    cardList.forEach {
+                                        if(it.contains(seenList[0])){
+                                            it.get(it.indexOf(seenList[0])).seen=false
+                                        }
+                                    }
+                                    card.seen=false
+                                    seenList.clear()
+                                }
+                            }
+
 
 
 
@@ -127,17 +168,29 @@ fun startTimer(onTicked:(f:Float) -> Unit,onFinished: () -> Unit) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameCard(modifier: Modifier, card: Card, onClick:()->Unit){
-    Card(modifier = modifier,onClick =onClick,
+fun GameCard(modifier: Modifier, card: Card, onClick:(seen:Boolean)->Unit){
+    var seen by remember{ mutableStateOf(card.seen) }
+    Card(modifier = modifier, onClick = {
+
+
+        if(!card.knew){
+            seen=!seen
+            onClick(seen)
+        }
+
+    },
         colors = CardDefaults.cardColors(contentColor = Color(R.color.card_bg),
             containerColor = Color(R.color.card_bg),
             disabledContainerColor =Color(R.color.card_bg),
             disabledContentColor = Color(R.color.card_bg)) ) {
 
-        Image(modifier=Modifier.fillMaxSize(),
-            painter = painterResource(id = card.photoUrl),
-            contentDescription ="Game card",
-            contentScale = ContentScale.FillBounds)
+        if (seen){
+            Image(modifier=Modifier.fillMaxSize(),
+                painter = painterResource(id = card.photoUrl),
+                contentDescription ="Game card",
+                contentScale = ContentScale.FillBounds)
+        }
+
 
     }
 }
