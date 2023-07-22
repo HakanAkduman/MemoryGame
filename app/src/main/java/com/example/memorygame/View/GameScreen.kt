@@ -25,9 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,28 +42,33 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.memorygame.Model.Card
 import com.example.memorygame.R
+import com.example.memorygame.ViewModel.GameScreenViewModel
 import com.example.memorygame.ui.theme.BackGround
 import com.example.memorygame.ui.theme.getPhotos
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.internal.notifyAll
 
 @Composable
-fun GameScreen(level:Int,navController: NavController){
-    GameScreenGenerate(navController = navController, edgeNumber = 4+2*level)
+fun GameScreen(level:Int,navController: NavController, viewModel: GameScreenViewModel=remember{ GameScreenViewModel() }){
+    val context= LocalContext.current
+    viewModel.getAllCards(context,4+2*level)
+    GameScreenGenerate(navController = navController, edgeNumber = 4+2*level, viewModel = viewModel)
 }
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
-fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
-    val context= LocalContext.current
+fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel: GameScreenViewModel) {
 
-    var seenList by remember{
+    val scope=rememberCoroutineScope()
+    val seenList by remember{
         mutableStateOf(mutableListOf<Card>())
     }
-    val cardList by remember {
-        mutableStateOf(getPhotos(context,edgeNumber))
+    var temp by remember {
+        mutableStateOf(true)
     }
+    val cardList by viewModel.cardlist.observeAsState(listOf())
     var gameStarted by remember {
         mutableStateOf(false)
     }
@@ -100,15 +107,23 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
 
                     items(it){card->
 
-
                         GameCard(modifier = Modifier
                             .size((384 / edgeNumber).dp)
                             .padding(3.dp)
-                            , card =  card)
-                        {seen ->
+                            , card =  card,
+                            viewModel = viewModel)
+                        {
+                            if (!gameStarted){
+                                gameStarted=true
 
-                            seenList.add(card)
+                            }
+                            if(it){
+                                seenList.add(card)
+                            }else{
+                                seenList.remove(card)
+                            }
                             if (seenList.size == 2) {
+
                                 if (seenList[0].photoUrl == seenList[1].photoUrl) {
                                     // Eşleşme durumu
                                     Log.e("game","kartlar eşleşiyor")
@@ -116,14 +131,15 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int) {
                                     seenList.clear()
                                 } else {
                                     Log.e("game","kartlar farklı")
-                                    cardList.forEach {
-                                        if(it.contains(seenList[0])){
-                                            it.get(it.indexOf(seenList[0])).seen=false
-                                        }
+                                    scope.launch {
+                                        delay(500)
+                                        seenList.forEach { viewModel.setSeen(it,false) }
+                                        seenList.clear()
                                     }
-                                    card.seen=false
-                                    seenList.clear()
+
+
                                 }
+
                             }
 
 
@@ -168,14 +184,15 @@ fun startTimer(onTicked:(f:Float) -> Unit,onFinished: () -> Unit) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameCard(modifier: Modifier, card: Card, onClick:(seen:Boolean)->Unit){
-    var seen by remember{ mutableStateOf(card.seen) }
+fun GameCard(modifier: Modifier, card: Card,viewModel: GameScreenViewModel, onClick:(Boolean)->Unit){
+
     Card(modifier = modifier, onClick = {
 
 
         if(!card.knew){
-            seen=!seen
-            onClick(seen)
+            viewModel.setSeen(card,!card.seen)
+
+            onClick(card.seen)
         }
 
     },
@@ -184,7 +201,7 @@ fun GameCard(modifier: Modifier, card: Card, onClick:(seen:Boolean)->Unit){
             disabledContainerColor =Color(R.color.card_bg),
             disabledContentColor = Color(R.color.card_bg)) ) {
 
-        if (seen){
+        if (card.seen){
             Image(modifier=Modifier.fillMaxSize(),
                 painter = painterResource(id = card.photoUrl),
                 contentDescription ="Game card",
@@ -198,5 +215,5 @@ fun GameCard(modifier: Modifier, card: Card, onClick:(seen:Boolean)->Unit){
 @Preview(showBackground = true)
 @Composable
 fun GamePreview() {
-    GameScreenGenerate(navController = NavController(LocalContext.current),4)
+    GameScreenGenerate(navController = NavController(LocalContext.current),4, GameScreenViewModel())
 }
