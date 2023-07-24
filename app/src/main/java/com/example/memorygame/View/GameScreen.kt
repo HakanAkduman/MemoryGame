@@ -7,20 +7,26 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,8 +44,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.memorygame.Model.Card
 import com.example.memorygame.R
 import com.example.memorygame.ViewModel.GameScreenViewModel
@@ -50,6 +60,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.internal.notifyAll
+import kotlin.concurrent.timer
 
 @Composable
 fun GameScreen(level:Int,navController: NavController, viewModel: GameScreenViewModel=remember{ GameScreenViewModel() }){
@@ -62,12 +73,17 @@ fun GameScreen(level:Int,navController: NavController, viewModel: GameScreenView
 fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel: GameScreenViewModel) {
 
     val scope=rememberCoroutineScope()
+    var point by remember{ mutableStateOf(100) }
+
+
+
     val seenList by remember{
         mutableStateOf(mutableListOf<Card>())
     }
-    var temp by remember {
-        mutableStateOf(true)
+    var finished by remember {
+        mutableStateOf(false)
     }
+    var knownCardList by remember{ mutableStateOf(mutableListOf<Card>()) }
     val cardList by viewModel.cardlist.observeAsState(listOf())
     var gameStarted by remember {
         mutableStateOf(false)
@@ -78,16 +94,36 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel:
     var progress by remember { mutableStateOf(1f) }
     var timerRunning by remember { mutableStateOf(false) }
 
+    if (!gameStarted&&finished){
+        GameFinishedDialog(
+            text = "Congrats you have $point points ",
+            navController = navController,
+            edgeNumber = edgeNumber
+        )
+
+    }
 
 
-    if (gameStarted&&!timerRunning){
+    if (gameStarted&&!timerRunning&&!finished){
         timerRunning = true
         progress = 1f
         startTimer(onTicked ={
             progress=it
         } ) {
-            timerRunning = false
-            Log.e("Message","Timer bitti")
+            if(gameStarted){
+
+                gameStarted=false
+                finished=true
+
+                Log.e("Message","Timer bitti")
+            }else{
+
+                gameStarted=false
+
+
+
+            }
+
         }
     }
 
@@ -113,6 +149,7 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel:
                             , card =  card,
                             viewModel = viewModel)
                         {
+                            point-=5
                             if (!gameStarted){
                                 gameStarted=true
 
@@ -127,8 +164,23 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel:
                                 if (seenList[0].photoUrl == seenList[1].photoUrl) {
                                     // Eşleşme durumu
                                     Log.e("game","kartlar eşleşiyor")
-                                    seenList.forEach { it.knew=true }
+                                    point+=50
+                                    seenList.forEach {
+                                        it.knew=true
+                                        knownCardList.add(it)
+                                    }
                                     seenList.clear()
+                                    if (knownCardList.size==edgeNumber*edgeNumber){
+                                        //süreden önce bitirmişse
+                                        gameStarted=false
+                                        finished=true
+
+
+
+                                    }
+
+
+
                                 } else {
                                     Log.e("game","kartlar farklı")
                                     scope.launch {
@@ -168,8 +220,30 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel:
     }
 }
 
+@Composable
+fun GameFinishedDialog(text:String,navController: NavController,edgeNumber: Int){
+
+
+    Dialog(
+        onDismissRequest = {
+
+        },
+        DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        content ={
+            Card() {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(text =text , modifier = Modifier.padding(bottom = 10.dp))
+                    Button(onClick = {navController.navigate("GameScreen/${(edgeNumber-4)/2}")}) {
+                        Text(text = "Replay")
+                    }
+                }
+            }
+        }
+    )
+}
+
 fun startTimer(onTicked:(f:Float) -> Unit,onFinished: () -> Unit) {
-    val duration = 40000L // 40 saniye
+    val duration = 60000L // 40 saniye
 
     object : CountDownTimer(duration, 100L) {
         override fun onTick(millisUntilFinished: Long) {
