@@ -3,14 +3,24 @@ package com.example.memorygame.View
 import android.os.CountDownTimer
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,7 +50,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -188,7 +200,7 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel:
                                 } else {
                                     Log.e("game","kartlar farklı")
                                     scope.launch {
-                                        delay(500)
+                                        delay(600)
                                         seenList.forEach { viewModel.setSeen(it,false) }
                                         seenList.clear()
                                     }
@@ -264,32 +276,49 @@ fun startTimer(onTicked:(f:Float) -> Unit,onFinished: () -> Unit) {
 @Composable
 fun GameCard(modifier: Modifier, card: Card,viewModel: GameScreenViewModel, onClick:(Boolean)->Unit){
 
-    Card(modifier = modifier, onClick = {
 
 
-        if(!card.knew){
-            viewModel.setSeen(card,!card.seen)
+    var animStarted by remember{ mutableStateOf(false) }
+    val animationOfColumn= animateFloatAsState(targetValue =if(animStarted)0.3f else 1f , animationSpec = tween(200), finishedListener = {
+        animStarted=false
+    })
 
-            onClick(card.seen)
+
+Column(modifier=modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
+
+        Card(modifier = Modifier.fillMaxHeight().fillMaxWidth(animationOfColumn.value), onClick = {
+
+
+            if(!card.knew){
+                viewModel.setSeen(card,!card.seen)
+                animStarted=true
+                onClick(card.seen)
+                
+            }
+
+        },
+            colors = CardDefaults.cardColors(contentColor = Color(R.color.card_bg),
+                containerColor =  Color(R.color.card_bg),
+                disabledContainerColor =Color(R.color.card_bg),
+                disabledContentColor = Color(R.color.card_bg)) ) {
+            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                if (!animStarted&&card.seen){
+                    Image(modifier= Modifier
+                        .fillMaxSize(),
+                        painter = painterResource(id = card.photoUrl),
+                        contentDescription ="Game card",
+                        contentScale = ContentScale.FillBounds)
+                }
+            }
+
+
+
+
         }
 
-    },
-        colors = CardDefaults.cardColors(contentColor = Color(R.color.card_bg),
-            containerColor = Color(R.color.card_bg),
-            disabledContainerColor =Color(R.color.card_bg),
-            disabledContentColor = Color(R.color.card_bg)) ) {
-
-        if (card.seen){
-            Image(modifier=Modifier.fillMaxSize(),
-                painter = painterResource(id = card.photoUrl),
-                contentDescription ="Game card",
-                contentScale = ContentScale.FillBounds)
-        }
-
-
-    }
 }
 
+}
 @Preview(showBackground = true)
 @Composable
 fun GamePreview() {
