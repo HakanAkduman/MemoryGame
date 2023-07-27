@@ -2,6 +2,7 @@ package com.example.memorygame.View
 
 import android.os.CountDownTimer
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +72,9 @@ fun GameScreen(level:Int,navController: NavController, viewModel: GameScreenView
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel: GameScreenViewModel) {
+    BackHandler() {
+        navController.navigate("LevelScreen")
+    }
 
     val scope=rememberCoroutineScope()
     var point by remember{ mutableStateOf(100) }
