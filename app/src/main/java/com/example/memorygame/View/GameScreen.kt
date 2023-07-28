@@ -200,7 +200,7 @@ fun GameScreenGenerate(navController: NavController, edgeNumber: Int, viewModel:
                                 } else {
                                     Log.e("game","kartlar farklı")
                                     scope.launch {
-                                        delay(600)
+                                        delay(650)
                                         seenList.forEach { viewModel.setSeen(it,false) }
                                         seenList.clear()
                                     }
@@ -293,7 +293,7 @@ Column(modifier=modifier, verticalArrangement = Arrangement.Center, horizontalAl
                 viewModel.setSeen(card,!card.seen)
                 animStarted=true
                 onClick(card.seen)
-                
+
             }
 
         },
